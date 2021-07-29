@@ -607,7 +607,56 @@ LazyMan.prototype.eat = function (something) {
     }
     return this
 }
+
 // 不论sleepFirst出现在哪个位置，总是最先执行
-LazyMan.prototype.sleepFirst = function (delay) {
-    //
+// 发布订阅模式
+function LazyMan (name) {
+    if (!(this instanceof LazyMan)) return new LazyMan(name);
+    console.log(`Hi! This is ${name}`);
+    this.watcherQueue = [];
+    setTimeout(() => nextTick(this.watcherQueue), 0)
 }
+
+function eat (something) { console.log(`Eat ${something}`) }
+
+function sleep (delay) { console.log(`Wake up ${delay} later`) }
+
+const nextTick = queue => {
+    // Promise.resolve().then(() => {
+        const callback = queue.shift();
+        callback && callback()
+    // })
+}
+
+LazyMan.prototype.eat = function (something) {
+    this.watcherQueue.push(() => {
+        eat(something);
+        nextTick(this.watcherQueue)
+    });
+    return this
+}
+
+LazyMan.prototype.sleep = function (delay) {
+    // 你只管push就行了
+    this.watcherQueue.push(() => {
+        setTimeout(() => {
+            sleep(delay);
+            nextTick(this.watcherQueue)
+        }, delay)
+    });
+    return this
+}
+
+LazyMan.prototype.sleepFirst = function (delay) {
+    this.watcherQueue.unshift(() => {
+        setTimeout(() => {
+            sleep(delay);
+            nextTick(this.watcherQueue)
+        }, delay)
+    });
+    return this
+}
+
+// 现在 执行完 观察者队列 里都有 函数了
+// 然后呢 队列里的函数 要一个个引爆 从哪个开始引爆
+LazyMan('Json').eat('dinner').sleep(3000).eat('lunch').sleepFirst(4000)
