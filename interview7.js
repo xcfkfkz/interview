@@ -614,24 +614,22 @@ function LazyMan (name) {
     if (!(this instanceof LazyMan)) return new LazyMan(name);
     console.log(`Hi! This is ${name}`);
     this.watcherQueue = [];
-    setTimeout(() => nextTick(this.watcherQueue), 0)
+    setTimeout(() => this.next(), 0)
 }
 
 function eat (something) { console.log(`Eat ${something}`) }
 
 function sleep (delay) { console.log(`Wake up ${delay} later`) }
 
-const nextTick = queue => {
-    // Promise.resolve().then(() => {
-        const callback = queue.shift();
-        callback && callback()
-    // })
+LazyMan.prototype.next = function () {
+    const callback = this.watcherQueue.shift();
+    callback && callback()
 }
 
 LazyMan.prototype.eat = function (something) {
     this.watcherQueue.push(() => {
         eat(something);
-        nextTick(this.watcherQueue)
+        this.next()
     });
     return this
 }
@@ -641,7 +639,7 @@ LazyMan.prototype.sleep = function (delay) {
     this.watcherQueue.push(() => {
         setTimeout(() => {
             sleep(delay);
-            nextTick(this.watcherQueue)
+            this.next()
         }, delay)
     });
     return this
@@ -651,7 +649,7 @@ LazyMan.prototype.sleepFirst = function (delay) {
     this.watcherQueue.unshift(() => {
         setTimeout(() => {
             sleep(delay);
-            nextTick(this.watcherQueue)
+            this.next()
         }, delay)
     });
     return this
@@ -660,3 +658,19 @@ LazyMan.prototype.sleepFirst = function (delay) {
 // 现在 执行完 观察者队列 里都有 函数了
 // 然后呢 队列里的函数 要一个个引爆 从哪个开始引爆
 LazyMan('Json').eat('dinner').sleep(3000).eat('lunch').sleepFirst(4000)
+
+// 斐波那契数列
+// 0 1 1 2 3 5 8 13
+// f(n) = f(n - 1) + f(n - 2)
+const fibonacci = n => {
+    if (n === 1) return 0;
+    if (n === 2) return 1;
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+
+// 青蛙跳台阶 1 2 3 5
+const jumpTimes = n => {
+    if (n === 1) return 1;
+    if (n === 2) return 2;
+    return jumpTimes(n - 1) + jumpTimes(n - 2)
+}
